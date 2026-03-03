@@ -4,12 +4,14 @@ Modern, dental fotoğraf analiz ve anamnez destekli mobil uygulama prototipi.
 Amaç; **hasta ve uzman** rollerine göre:
 
 - Dental fotoğraf yükleme/çekme
-- Mock **“AI analiz”** sonucu üretme
+- **“AI analiz”** sonucu üretme
 - Analize göre **dinamik anamnez formu** doldurma
 - Raporları cihazda saklama ve görüntüleme
 - Uzman tarafında paylaşılan raporları inceleme
 
 akışlarını bir arada göstermek.
+
+- Video Linki: https://youtube.com/shorts/J4lIFfjDGvQ?feature=share 
 
 > **Önemli:** DentiScan **tıbbi tanı koymaz**. Sadece fotoğraf ve girilen bilgilere dayalı **risk değerlendirmesi ve bilgilendirme** sunar.  
 > Gerçek hastalar için kullanılmamalıdır.
