@@ -1,14 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
-import { TextInput, Text, Chip, List } from 'react-native-paper';
+import { TextInput, Text, Chip, List, ActivityIndicator } from 'react-native-paper';
 import { Screen, EmptyState, ErrorState } from '@components/AppPrimitives';
 import { useAuthStore } from '@store/authStore';
 import { listReportsByPatient } from '@services/reportService';
 import type { Report, RiskLevel } from '@types/models';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 type Nav = NativeStackNavigationProp<any>;
+
+function riskLabel(level: string): string {
+  if (level === 'high') return 'Yüksek';
+  if (level === 'medium') return 'Orta';
+  return 'Düşük';
+}
 
 export const ReportsListScreen: React.FC = () => {
   const { user } = useAuthStore();
@@ -18,29 +24,37 @@ export const ReportsListScreen: React.FC = () => {
   const [search, setSearch] = useState('');
   const [riskFilter, setRiskFilter] = useState<RiskLevel | 'all'>('all');
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const run = async () => {
-      if (!user) return;
-      try {
-        const list = await listReportsByPatient(user.id);
-        setReports(list);
-        setFiltered(list);
-      } catch {
-        setError('Raporlar yüklenirken bir hata oluştu.');
-      }
-    };
-    run();
-  }, [user]);
+  // Ekran odağa her geldiğinde listeyi yenile
+  useFocusEffect(
+    useCallback(() => {
+      const run = async () => {
+        if (!user) return;
+        setLoading(true);
+        setError(null);
+        try {
+          const list = await listReportsByPatient(user.id);
+          setReports(list);
+        } catch {
+          setError('Raporlar yüklenirken bir hata oluştu.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      run();
+    }, [user]),
+  );
 
-  useEffect(() => {
+  // Filtre her değiştiğinde uygula
+  React.useEffect(() => {
     let base = [...reports];
     if (riskFilter !== 'all') {
-      base = base.filter((r) => r.aiResult.riskLevel === riskFilter);
+      base = base.filter((r) => r.aiResult?.riskLevel === riskFilter);
     }
     if (search.trim()) {
       base = base.filter((r) =>
-        r.aiResult.summary.toLowerCase().includes(search.trim().toLowerCase()),
+        (r.aiResult?.summary ?? '').toLowerCase().includes(search.trim().toLowerCase()),
       );
     }
     setFiltered(base);
@@ -55,7 +69,7 @@ export const ReportsListScreen: React.FC = () => {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <Text variant="titleLarge" style={{ marginBottom: 8 }}>
         Analizlerim
       </Text>
@@ -67,49 +81,36 @@ export const ReportsListScreen: React.FC = () => {
         style={{ marginBottom: 8 }}
       />
 
-      <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-        <Chip
-          selected={riskFilter === 'all'}
-          onPress={() => setRiskFilter('all')}
-          style={{ marginRight: 4 }}
-        >
-          Tümü
-        </Chip>
-        <Chip
-          selected={riskFilter === 'low'}
-          onPress={() => setRiskFilter('low')}
-          style={{ marginRight: 4 }}
-        >
-          Düşük
-        </Chip>
-        <Chip
-          selected={riskFilter === 'medium'}
-          onPress={() => setRiskFilter('medium')}
-          style={{ marginRight: 4 }}
-        >
-          Orta
-        </Chip>
-        <Chip selected={riskFilter === 'high'} onPress={() => setRiskFilter('high')}>
-          Yüksek
-        </Chip>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
+        <Chip selected={riskFilter === 'all'} onPress={() => setRiskFilter('all')} style={{ marginRight: 4, marginBottom: 4 }}>Tümü</Chip>
+        <Chip selected={riskFilter === 'low'} onPress={() => setRiskFilter('low')} style={{ marginRight: 4, marginBottom: 4 }}>Düşük</Chip>
+        <Chip selected={riskFilter === 'medium'} onPress={() => setRiskFilter('medium')} style={{ marginRight: 4, marginBottom: 4 }}>Orta</Chip>
+        <Chip selected={riskFilter === 'high'} onPress={() => setRiskFilter('high')} style={{ marginBottom: 4 }}>Yüksek</Chip>
       </View>
 
-      {filtered.length === 0 ? (
+      {loading && (
+        <ActivityIndicator animating style={{ marginTop: 16 }} />
+      )}
+
+      {!loading && filtered.length === 0 && (
         <EmptyState
           title="Rapor bulunamadı"
           description="Filtreleri temizlemeyi veya yeni bir analiz oluşturmayı deneyin."
         />
-      ) : (
-        filtered.map((r) => (
-          <List.Item
-            key={r.id}
-            title={new Date(r.createdAt).toLocaleString()}
-            description={r.aiResult.summary}
-            onPress={() => navigation.navigate('ReportDetail', { reportId: r.id })}
-            left={(props) => <List.Icon {...props} icon="file-document-outline" />}
-          />
-        ))
       )}
+
+      {!loading && filtered.map((r) => (
+        <List.Item
+          key={r.id}
+          title={r.aiResult?.summary ?? 'Analiz özeti yok'}
+          description={`${new Date(r.createdAt).toLocaleString('tr-TR')}  •  Risk: ${riskLabel(r.aiResult?.riskLevel ?? 'low')}`}
+          titleNumberOfLines={2}
+          onPress={() => navigation.navigate('ReportDetail', { reportId: r.id })}
+          left={(props) => <List.Icon {...props} icon="file-document-outline" />}
+          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          style={{ backgroundColor: '#fff', marginBottom: 4, borderRadius: 8 }}
+        />
+      ))}
     </Screen>
   );
 };

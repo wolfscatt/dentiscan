@@ -105,10 +105,10 @@ function mapFindingToDisplay(f: AiFinding): { title: string; description: string
 
 export const AnalysisResultScreen: React.FC<Props> = ({ route, navigation }) => {
   const { imageUri } = route.params;
-  const { lastResult, setResult } = useAnalysisStore();
+  const { lastResult, setResult, lastInterpretation, setInterpretation } = useAnalysisStore();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!lastResult);
-  const [llmText, setLlmText] = useState<string | null>(null);
+  const [llmText, setLlmText] = useState<string | null>(lastInterpretation);
 
   useEffect(() => {
     let isMounted = true;
@@ -142,22 +142,24 @@ export const AnalysisResultScreen: React.FC<Props> = ({ route, navigation }) => 
         const text = await interpretAnalysis(lastResult);
         if (!cancelled) {
           setLlmText(text);
+          setInterpretation(text); // store'a kaydet, AnamnesisForm okuyacak
         }
       } catch {
         if (!cancelled) {
+          // LLM başarısız olursa yerleşik yorum store'a yazılır
+          const fallback = buildInterpretation(lastResult);
           setLlmText(null);
+          setInterpretation(fallback);
         }
       }
     };
 
-    // LLM cevabı gelirse ek bir yorum olarak kullanacağız;
-    // gelmezse hiçbir loading metni göstermeden lokal yorumu kullanacağız.
     run();
 
     return () => {
       cancelled = true;
     };
-  }, [lastResult]);
+  }, [lastResult, setInterpretation]);
 
   if (loading && !lastResult) {
     return (

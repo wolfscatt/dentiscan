@@ -43,6 +43,7 @@ export interface Report {
   imageUri: string;
   aiResult: AiResult;
   anamnesisAnswers: Record<string, string>;
+  interpretation?: string;
   sharedWithExpert?: boolean;
   expertNote?: string;
 }

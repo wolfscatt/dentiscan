@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, List, Chip, Divider } from 'react-native-paper';
 import { Screen, AppButton, AppCard, EmptyState } from '@components/AppPrimitives';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '@store/authStore';
 import { getAnalytics } from '@utils/analyticsService';
+import { listReportsByPatient } from '@services/reportService';
+import type { Report } from '@types/models';
 
 interface AnalyticsState {
   totalAnalyses: number;
@@ -14,21 +16,41 @@ interface AnalyticsState {
 
 type Nav = NativeStackNavigationProp<any>;
 
+function riskLabel(level: string): string {
+  if (level === 'high') return 'Yüksek';
+  if (level === 'medium') return 'Orta';
+  return 'Düşük';
+}
+
+function riskColor(level: string): string {
+  if (level === 'high') return '#EF4444';
+  if (level === 'medium') return '#F97316';
+  return '#22C55E';
+}
+
 export const PatientHomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { user } = useAuthStore();
   const [analytics, setAnalytics] = React.useState<AnalyticsState | null>(null);
+  const [recentReports, setRecentReports] = React.useState<Report[]>([]);
 
-  React.useEffect(() => {
-    const run = async () => {
-      const a = await getAnalytics();
-      setAnalytics(a);
-    };
-    run();
-  }, []);
+  // Ekran odağa geldiğinde hem analitiği hem son raporları yenile
+  useFocusEffect(
+    React.useCallback(() => {
+      const run = async () => {
+        const [a, reports] = await Promise.all([
+          getAnalytics(),
+          user ? listReportsByPatient(user.id) : Promise.resolve([]),
+        ]);
+        setAnalytics(a);
+        setRecentReports(reports.slice(0, 5));
+      };
+      run();
+    }, [user]),
+  );
 
   return (
-    <Screen>
+    <Screen scroll>
       <Text variant="headlineSmall" style={styles.title}>
         Merhaba, {user?.name ?? 'Hasta'}
       </Text>
@@ -58,13 +80,45 @@ export const PatientHomeScreen: React.FC = () => {
       )}
 
       <View style={{ marginTop: 16 }}>
-        <Text variant="titleMedium" style={{ marginBottom: 4 }}>
+        <Text variant="titleMedium" style={{ marginBottom: 8 }}>
           Son Raporlar
         </Text>
-        <EmptyState
-          title="Henüz rapor yok"
-          description="İlk dental analizinizle başlayın, sonuçlar burada görünecek."
-        />
+
+        {recentReports.length === 0 ? (
+          <EmptyState
+            title="Henüz rapor yok"
+            description="İlk dental analizinizle başlayın, sonuçlar burada görünecek."
+          />
+        ) : (
+          <AppCard title="">
+            {recentReports.map((r, idx) => (
+              <React.Fragment key={r.id}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ReportDetail', { reportId: r.id })}
+                  style={styles.reportRow}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.reportLeft}>
+                    <Text variant="bodyMedium" numberOfLines={2} style={styles.reportSummary}>
+                      {r.aiResult?.summary ?? 'Analiz özeti yok'}
+                    </Text>
+                    <Text variant="bodySmall" style={styles.reportDate}>
+                      {new Date(r.createdAt).toLocaleString('tr-TR')}
+                    </Text>
+                  </View>
+                  <Chip
+                    compact
+                    style={{ backgroundColor: riskColor(r.aiResult?.riskLevel ?? 'low') }}
+                    textStyle={{ color: '#fff', fontSize: 11 }}
+                  >
+                    {riskLabel(r.aiResult?.riskLevel ?? 'low')}
+                  </Chip>
+                </TouchableOpacity>
+                {idx < recentReports.length - 1 && <Divider />}
+              </React.Fragment>
+            ))}
+          </AppCard>
+        )}
       </View>
     </Screen>
   );
@@ -77,6 +131,22 @@ const styles = StyleSheet.create({
   subtitle: {
     marginBottom: 16,
     opacity: 0.85,
+  },
+  reportRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  reportLeft: {
+    flex: 1,
+    marginRight: 8,
+  },
+  reportSummary: {
+    marginBottom: 2,
+  },
+  reportDate: {
+    opacity: 0.6,
   },
 });
 

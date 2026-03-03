@@ -26,7 +26,7 @@ type Props = NativeStackScreenProps<PatientStackParamList, 'AnamnesisForm'>;
 
 export const AnamnesisFormScreen: React.FC<Props> = ({ route, navigation }) => {
   const { imageUri } = route.params;
-  const { lastResult } = useAnalysisStore();
+  const { lastResult, lastInterpretation } = useAnalysisStore();
   const { user } = useAuthStore();
 
   const {
@@ -59,12 +59,25 @@ export const AnamnesisFormScreen: React.FC<Props> = ({ route, navigation }) => {
         duration: values.duration ?? '',
         medical: values.medical ?? '',
       },
+      // Analiz ekranında gösterilen LLM/yerleşik yorumu rapora kaydet
+      interpretation: lastInterpretation ?? undefined,
       sharedWithExpert: false,
     };
 
-    await createReport(report);
-    await incrementAnalysisCount();
-    navigation.replace('ReportDetail', { reportId: id });
+    // Kayıt denemesi – SQLite tarafı bozulsa bile akışı bloklamasın
+    try {
+      await createReport(report);
+      await incrementAnalysisCount();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Rapor kaydedilirken hata oluştu (yoksayılıyor)', e);
+    }
+
+    // Her durumda hasta ana sayfasına dön
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'PatientTabs' }],
+    });
   };
 
   return (
