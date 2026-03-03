@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, ViewStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, Text, ActivityIndicator, useTheme } from 'react-native-paper';
 
 interface ScreenProps {
@@ -12,11 +13,14 @@ export const Screen: React.FC<ScreenProps> = ({ children, scroll = true, style }
   const Container = scroll ? ScrollView : View;
   const theme = useTheme();
   return (
-    <View style={[styles.screenRoot, { backgroundColor: theme.colors.background }]}>
-      <Container contentContainerStyle={styles.screenContent} style={!scroll ? styles.flex : undefined}>
+    <SafeAreaView style={[styles.screenRoot, { backgroundColor: theme.colors.background }]}>
+      <Container
+        contentContainerStyle={styles.screenContent}
+        style={!scroll ? styles.flex : undefined}
+      >
         {children}
       </Container>
-    </View>
+    </SafeAreaView>
   );
 };
 

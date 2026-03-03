@@ -1,4 +1,5 @@
 import { AiResult, RiskLevel } from '@types/models';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
 const MOCK_DISCLAIMER = 'Bu sonuç tıbbi tanı değildir; kesin değerlendirme için diş hekimi muayenesi gerekir.';
 
@@ -62,21 +63,36 @@ function buildMockResult(imageUri: string): AiResult {
 }
 
 export async function analyzeDentalPhoto(imageUri: string): Promise<AiResult> {
-  const apiUrl = process.env.ANALYSIS_API_URL;
-
-  if (!apiUrl) {
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    return buildMockResult(imageUri);
-  }
+  const apiUrl = 'https://0ac9-34-127-99-107.ngrok-free.app/analyze';
 
   try {
+    // eslint-disable-next-line no-console
+    console.log('[AI] Calling backend at', apiUrl);
+
+    const manipulated = await manipulateAsync(
+      imageUri,
+      [],
+      {
+        compress: 0.7,
+        format: SaveFormat.JPEG,
+        base64: true,
+      },
+    );
+
+    if (!manipulated.base64) {
+      return buildMockResult(imageUri);
+    }
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ imageUri }),
+      body: JSON.stringify({ imageBase64: manipulated.base64 }),
     });
+
+    // eslint-disable-next-line no-console
+    console.log('[AI] Backend response status', response.status);
 
     if (!response.ok) {
       return buildMockResult(imageUri);
@@ -84,8 +100,35 @@ export async function analyzeDentalPhoto(imageUri: string): Promise<AiResult> {
 
     const data = (await response.json()) as AiResult;
     return data;
-  } catch {
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[AI] Error while calling backend', e);
     return buildMockResult(imageUri);
+  }
+}
+
+export async function interpretAnalysis(result: AiResult): Promise<string> {
+  const url = 'https://0ac9-34-127-99-107.ngrok-free.app/interpret';
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ result }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`LLM interpret error: ${response.status}`);
+    }
+
+    const data = (await response.json()) as { interpretation: string };
+    return data.interpretation;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[AI] Error while calling interpret endpoint', e);
+    throw e;
   }
 }
 

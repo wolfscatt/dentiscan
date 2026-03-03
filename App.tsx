@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppTheme } from '@ui/theme';
 import { RootNavigator } from '@navigation/RootNavigator';
 import { runMigrations } from '@services/db';
@@ -18,21 +19,25 @@ export default function App() {
 
   if (!ready) {
     return (
-      <PaperProvider theme={AppTheme}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator />
-        </View>
-      </PaperProvider>
+      <SafeAreaProvider>
+        <PaperProvider theme={AppTheme}>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator />
+          </View>
+        </PaperProvider>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <PaperProvider theme={AppTheme}>
-      <NavigationContainer>
-        <StatusBar style="light" />
-        <RootNavigator />
-      </NavigationContainer>
-    </PaperProvider>
+    <SafeAreaProvider>
+      <PaperProvider theme={AppTheme}>
+        <NavigationContainer>
+          <StatusBar style="light" />
+          <RootNavigator />
+        </NavigationContainer>
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }
 

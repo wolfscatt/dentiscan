@@ -14,3 +14,13 @@ yarn-error.log*
 *.apk
 *.aab
 
+# Python / backend
+python-backend/venv
+python-backend/__pycache__/
+python-backend/.ipynb_checkpoints/
+*.pyc
+__pycache__/
+
+# Colab / notebooks
+*.ipynb
+

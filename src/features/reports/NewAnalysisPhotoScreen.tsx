@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Text, SegmentedButtons } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { PatientStackParamList } from '@navigation/patient/PatientNavigator';
 import { Screen, AppButton, ErrorState } from '@components/AppPrimitives';
@@ -10,7 +10,6 @@ import { analyzeDentalPhoto } from '@services/aiService';
 type Props = NativeStackScreenProps<PatientStackParamList, 'NewAnalysis'>;
 
 export const NewAnalysisPhotoScreen: React.FC<Props> = ({ navigation }) => {
-  const [mode, setMode] = useState<'local'>('local');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -64,16 +63,10 @@ export const NewAnalysisPhotoScreen: React.FC<Props> = ({ navigation }) => {
         Dental Fotoğraf
       </Text>
       <Text variant="bodyMedium" style={{ marginBottom: 16, opacity: 0.85 }}>
-        Dişlerinizi net gösteren bir fotoğraf çekin veya galerinizden seçin. Fotoğraf ve analiz
-        sonucu sadece bu cihazda, yerel veritabanında saklanacaktır.
+        Dişlerinizi net gösteren bir fotoğraf çekin veya galerinizden seçin. Fotoğraf, cihazınızdan
+        Hugging Face üzerindeki diş sağlığı modeline güvenli bir şekilde gönderilecek ve sonuçlar
+        bu uygulamada saklanacaktır.
       </Text>
-
-      <SegmentedButtons
-        value={mode}
-        onValueChange={() => {}}
-        style={{ marginBottom: 16 }}
-        buttons={[{ value: 'local', label: 'Cihaz İçi Analiz', icon: 'beaker-outline' }]}
-      />
 
       {imageUri ? (
         <View style={styles.previewContainer}>

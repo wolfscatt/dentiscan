@@ -123,13 +123,17 @@ dentiscan/
 
 ### 4.1 `aiService.ts`
 
-- `analyzeDentalPhoto(imageUri) : Promise<AiResult>`
-- Varsayılan **MOCK** mod:
-  - `imageUri` içeriğine göre basit kural tabanlı risk seviyesi (`low|medium|high`)
-  - Örnek bulgular, öneriler, anamnez soruları ve açıklama üretir.
-- Eğer ortamda `ANALYSIS_API_URL` tanımlı ise:
-  - `POST { imageUri }` isteği atılır
-  - Başarısız olursa mock sonuç döner.
+- `analyzeDentalPhoto(imageUri) : Promise<{ aiResult: AiResult; interpretation: string | null }>`
+  - Fotoğrafı base64’e çevirir (`expo-image-manipulator`).
+  - `POST { imageBase64 }` ile **Python/Colab backend**’deki `/analyze` endpoint’ine istek atar.
+  - Backend:
+    - `prithivMLmods/tooth-agenesis-siglip2` modeli ile dental sınıflandırma yapar.
+    - `meta-llama/Llama-3.1-8B-Instruct` (veya seçtiğiniz başka bir LLM) ile **Türkçe açıklama** üretir.
+    - İkisini birlikte döner:
+      - `aiResult`: UI’daki özet, bulgular, öneriler, anamnez vs.
+      - `interpretation`: LLM’den dönen serbest metin açıklama (yoksa `null`).
+- Backend’e ulaşılamazsa veya hata olursa:
+  - Uçtan uca akış bozulmasın diye **lokal mock `AiResult`** üretilir, `interpretation: null` döner.
 
 ### 4.2 `reportService.ts`
 
@@ -210,12 +214,18 @@ dentiscan/
      - `AnalysisResultScreen`’e geçilir.
 
 2. **Analiz Sonucu (`AnalysisResultScreen`)**
-   - `aiService` ile gelen JSON:
+   - `analyzeDentalPhoto` ile gelen JSON:
+     - `aiResult` – tooth-agenesis modelinden gelen ham sonuç (UI’da Türkçeleştirilmiş)
+     - `interpretation` – Llama 3.1 (veya seçtiğiniz LLM) ile üretilmiş Türkçe açıklama
      - Özet
      - Risk seviyesi chip’i (renk kodlu)
      - Bulgular listesi
      - Öneriler listesi
      - Uyarı/disclaimer metni
+   - “DentiScan Yorumu” kartı:
+     - Önce “Detaylı yorum hazırlanıyor, lütfen bekleyin...” yazar.
+     - LLM’den yanıt gelirse **sadece LLM yorumu** gösterilir.
+     - Zaman aşımı veya hata durumunda: “LLM tabanlı detaylı yorum şu anda alınamadı...” mesajı gösterilir.
    - “**Anamnez Doldur**” butonu:
      - `AnamnesisFormScreen`’e geçiş
 
@@ -293,7 +303,9 @@ Her liste ve veri çekme işlemi için:
 Bu proje, ders kapsamında **MVP / demo** amaçlı tasarlanmıştır:
 
 - Gerçek hasta verisi ile kullanılmamalıdır.
-- AI kısmı tamamen **mock/heuristic** bazlıdır; sadece UI ve akış demonstrasyonudur.
+- AI kısmı:
+  - Lokal fallback’te **mock/heuristic** bazlıdır.
+  - Python/Colab backend’i ile birlikte **gerçek görüntü sınıflandırma + LLM yorumlama** akışı sağlar.
 
 İleri faz için fikirler:
 
@@ -305,4 +317,95 @@ Bu proje, ders kapsamında **MVP / demo** amaçlı tasarlanmıştır:
 
 Bu README, projeyi hızlıca ayağa kaldırmanız ve temel akışları anlamanız için özet bir rehberdir.  
 Kodun tamamı TypeScript ile yazıldığı için, bileşen ve tip isimleri üzerinden kolayca keşfe devam edebilirsiniz.
+
+---
+
+## 8. Python Backend (Lokal) – `python-backend/`
+
+> Bu klasör Git’e yalnızca **kaynak kod** ile dahil edilmelidir.  
+> `venv/` ve diğer derlenmiş dosyalar `.gitignore` ile dışarıda bırakılmıştır.
+
+### 8.1 Bağımlılıklar
+
+`python-backend/requirements.txt`:
+
+```txt
+fastapi==0.115.5
+uvicorn[standard]==0.32.0
+transformers==4.45.2
+torch>=2.3.0
+Pillow==10.4.0
+python-multipart==0.0.12
+accelerate==1.0.1
+```
+
+### 8.2 Sanal ortam ve çalıştırma
+
+```bash
+cd python-backend
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+pip install -r requirements.txt
+
+uvicorn app:app --host 0.0.0.0 --port 4001
+```
+
+- `GET /health` → `{ ok: true, image_model, llm_model }`
+- `POST /analyze`:
+  - Body: `{ "imageBase64": "<base64-görüntü>" }`
+  - Response: `{ aiResult: AiResult, interpretation: string | null }`
+
+> **Uyarı:** Llama 3.1 8B modeli CPU’da ağırdır. Gerçek kullanım için GPU’lu bir makine veya Colab GPU önerilir.
+
+---
+
+## 9. Colab Backend (Önerilen Geliştirme Senaryosu)
+
+Lokal makineniz Llama 3.1 8B için yetersizse, aynı backend’i Google Colab üzerinde çalıştırabilirsiniz.
+
+### 9.1 Adımlar (özet)
+
+1. Yeni bir Colab defteri açın.
+2. README’nin sonundaki “Colab backend örneği” hücrelerini sırasıyla çalıştırın:
+   - Hugging Face’e `login(...)` ile giriş
+   - FastAPI + modelleri kurup `app`’i tanımlama
+   - `pyngrok` ile `uvicorn`’u dışarı açma
+3. Colab çıktısında görünen:
+
+```text
+PUBLIC URL: https://xxxx.ngrok-free.app
+Health check: https://xxxx.ngrok-free.app/health
+```
+
+4. Mobil uygulamada `BACKEND_URL` sabitini bu URL ile güncelleyin:
+
+```ts
+// src/services/aiService.ts
+const BACKEND_URL = 'https://xxxx.ngrok-free.app';
+```
+
+Artık:
+
+- `analyzeDentalPhoto` → `https://xxxx.ngrok-free.app/analyze`
+- Backend:
+  - tooth-agenesis sınıflandırma
+  - Llama 3.1 ile Türkçe yorum
+  - Sonucu mobil UI’a döndürür.
+
+---
+
+## 10. Git / Depo Temizliği
+
+- Node tarafı:
+  - `node_modules/`, `.expo/`, `.expo-shared/` zaten `.gitignore` içinde.
+- Python tarafı:
+  - `python-backend/venv/`
+  - `__pycache__/`, `*.pyc`
+  - Colab checkpoint/defterleri: `*.ipynb`, `.ipynb_checkpoints/`
+
+Bu sayede:
+
+- Depoya yalnızca **kaynak kod** ve konfigürasyonlar girer.
+- Büyük venv / model cache’leri remote’a push edilmez.
 
