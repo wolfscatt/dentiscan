@@ -10,7 +10,7 @@ import { analyzeDentalPhoto } from '@services/aiService';
 type Props = NativeStackScreenProps<PatientStackParamList, 'NewAnalysis'>;
 
 export const NewAnalysisPhotoScreen: React.FC<Props> = ({ navigation }) => {
-  const [mode, setMode] = useState<'mock' | 'api'>('mock');
+  const [mode, setMode] = useState<'local'>('local');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +49,6 @@ export const NewAnalysisPhotoScreen: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     setError(null);
     try {
-      // Şimdilik sadece mock servis kullanılıyor; mode==='api' olduğunda da aynı fonksiyona gidiyor.
       await analyzeDentalPhoto(imageUri);
       navigation.navigate('AnalysisResult', { imageUri });
     } catch (e) {
@@ -65,18 +64,15 @@ export const NewAnalysisPhotoScreen: React.FC<Props> = ({ navigation }) => {
         Dental Fotoğraf
       </Text>
       <Text variant="bodyMedium" style={{ marginBottom: 16, opacity: 0.85 }}>
-        Dişlerinizi net gösteren bir fotoğraf çekin veya galerinizden seçin. Fotoğraf sadece bu
-        cihazda mock analiz için kullanılacaktır.
+        Dişlerinizi net gösteren bir fotoğraf çekin veya galerinizden seçin. Fotoğraf ve analiz
+        sonucu sadece bu cihazda, yerel veritabanında saklanacaktır.
       </Text>
 
       <SegmentedButtons
         value={mode}
-        onValueChange={(val) => setMode(val as 'mock' | 'api')}
+        onValueChange={() => {}}
         style={{ marginBottom: 16 }}
-        buttons={[
-          { value: 'mock', label: 'Mock Analiz', icon: 'beaker-outline' },
-          { value: 'api', label: 'API (varsa)', icon: 'cloud-outline' },
-        ]}
+        buttons={[{ value: 'local', label: 'Cihaz İçi Analiz', icon: 'beaker-outline' }]}
       />
 
       {imageUri ? (

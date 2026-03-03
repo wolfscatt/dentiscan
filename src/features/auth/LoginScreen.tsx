@@ -31,10 +31,10 @@ export const LoginScreen: React.FC<Props> = ({ route }) => {
     },
   });
 
-  const { loginMock, loading } = useAuthStore();
+  const { login, loading } = useAuthStore();
 
   const onSubmit = (values: FormValues) => {
-    loginMock({ ...values, role });
+    login({ ...values, role });
   };
 
   return (
@@ -43,7 +43,8 @@ export const LoginScreen: React.FC<Props> = ({ route }) => {
         {role === 'patient' ? 'Hasta Girişi' : 'Uzman Girişi'}
       </Text>
       <Text variant="bodyMedium" style={{ marginBottom: 16, opacity: 0.8 }}>
-        Demo amaçlı basit bir giriş ekranı. Bilgileriniz cihazınızda mock olarak tutulur.
+        Bu ekrandan temel uzman/hasta hesabınızla giriş yaparsınız. Bilgileriniz bu cihazda
+        şifrelenmemiş olarak saklanır; gerçek hasta verisi girmeyin.
       </Text>
 
       <Controller

@@ -14,8 +14,8 @@ export const ExpertProfileScreen: React.FC = () => {
         {user?.name} ({user?.email})
       </Text>
       <Text variant="bodySmall" style={{ marginTop: 16, opacity: 0.8 }}>
-        Bu MVP sürümünde uzman tarafında temel profil ve hasta listesi placeholder olarak
-        sunulmaktadır. İlerleyen adımlarda rapor inceleme ve not ekleme akışları eklenecektir.
+        Bu ekrandan adınız ve e-posta bilgilerinizle sisteme giriş yaptığınız uzman hesabını
+        görüyorsunuz. Hasta paylaşımları ve rapor notları kalıcı olarak cihazda saklanır.
       </Text>
     </Screen>
   );

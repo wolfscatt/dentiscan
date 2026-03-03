@@ -68,7 +68,7 @@ export const ExpertPatientsScreen: React.FC = () => {
   return (
     <Screen>
       <Text variant="titleLarge" style={{ marginBottom: 8 }}>
-        Hastalar (Mock)
+        Hastalar
       </Text>
       <TextInput
         mode="outlined"

@@ -104,8 +104,7 @@ export const ReportDetailScreen: React.FC<Props> = ({ route }) => {
 
       <AppCard title="Paylaşım">
         <Text variant="bodySmall" style={{ marginBottom: 8, opacity: 0.8 }}>
-          Bu raporu uzman ile paylaşmak, mock modda sadece cihaz içi “uzman listesine düştü”
-          şeklinde simüle edilir.
+          Bu raporu uzman ile paylaştığınızda cihazınızdaki uzman görünümünde bu rapor listelenir.
         </Text>
         <AppButton
           label={report.sharedWithExpert ? 'Uzmanla paylaşıldı' : 'Uzmanla paylaş'}

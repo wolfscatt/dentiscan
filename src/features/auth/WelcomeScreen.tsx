@@ -24,8 +24,9 @@ export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
 
       <AppCard title="Gizlilik ve Uyarı">
         <Text variant="bodyMedium" style={styles.bodyText}>
-          DentiScan, diş fotoğraflarını cihazınızda işler ve mock modda çalışır. Sonuçlar sadece
-          bilgilendirme amaçlıdır.
+          DentiScan, diş fotoğraflarını ve raporları cihazınızda yerel olarak (SQLite veritabanında)
+          saklar. Sonuçlar yine de sadece bilgilendirme amaçlıdır; bir diş hekimi muayenesinin yerini
+          almaz.
         </Text>
         <Text variant="bodySmall" style={[styles.bodyText, { marginTop: 8 }]}>
           Bu uygulama tıbbi tanı koymaz. Klinik değerlendirme için mutlaka bir diş hekimine

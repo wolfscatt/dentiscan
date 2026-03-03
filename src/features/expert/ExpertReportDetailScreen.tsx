@@ -96,11 +96,7 @@ export const ExpertReportDetailScreen: React.FC<Props> = ({ route }) => {
           placeholder="Bu alan demo amaçlıdır; detaylı tedavi planı yazmayın."
           style={{ marginBottom: 8 }}
         />
-        <AppButton
-          label="Notu Kaydet (Mock)"
-          onPress={handleSaveNote}
-          loading={saving}
-        />
+        <AppButton label="Notu Kaydet" onPress={handleSaveNote} loading={saving} />
       </View>
     </Screen>
   );

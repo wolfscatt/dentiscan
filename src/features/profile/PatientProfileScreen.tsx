@@ -35,8 +35,8 @@ export const PatientProfileScreen: React.FC = () => {
           Gizlilik
         </Text>
         <Text variant="bodySmall" style={{ opacity: 0.8 }}>
-          Fotoğraflar ve raporlar bu MVP sürümünde sadece cihazınızda mock olarak saklanır. Demo
-          amaçlıdır ve gerçek hasta verisi içermemelidir.
+          Fotoğraflar ve raporlar bu uygulamada sadece bu cihazda, yerel veritabanında tutulur.
+          Yine de demo amaçlıdır ve gerçek hasta verisi içermemelidir.
         </Text>
       </View>
 
