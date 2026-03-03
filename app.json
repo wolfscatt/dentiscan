@@ -4,11 +4,9 @@
     "slug": "dentiscan",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": null,
     "scheme": "dentiscan",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": null,
       "resizeMode": "contain",
       "backgroundColor": "#0F172A"
     },
@@ -20,16 +18,11 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": null,
         "backgroundColor": "#0F172A"
       },
-      "package": "com.example.dentiscan"
+      "package": "com.velmora.dentiscan"
     },
     "web": {},
-    "extra": {
-      "eas": {
-        "projectId": "00000000-0000-0000-0000-000000000000"
-      }
-    }
+    "extra": {}
   }
 }

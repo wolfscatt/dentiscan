@@ -11,8 +11,11 @@ yarn-error.log*
 *.iml
 .idea
 .vscode
-*.apk
-*.aab
+
+# Android - generated native folder (rebuild with: npx expo prebuild)
+android/
+*.hprof
+*.jsbundle
 
 # Python / backend
 python-backend/venv
